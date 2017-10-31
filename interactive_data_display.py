@@ -4,11 +4,14 @@ import numpy as np
 import collections
 import os
 import collections
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
 import scipy.io
 from time import sleep
+
 
 #Validate created model with a compltely different dataset
 D=24
