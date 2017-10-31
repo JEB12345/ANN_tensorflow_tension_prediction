@@ -5,7 +5,7 @@ import collections
 import os
 import collections
 import matplotlib
-matplotlib.use('agg')
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
@@ -90,8 +90,7 @@ for j in range (valid_batch):
     plt.pause(0.05)
 
 while True:
-    plt.pause(0.05)
-
+    pass
 
 
 

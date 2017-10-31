@@ -5,7 +5,7 @@ import collections
 import os
 import collections
 import matplotlib
-matplotlib.use('agg')
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
@@ -38,7 +38,8 @@ def callback(msg):
     global effort			# global for scoping the variables outside of the callback function
     global index
     global arraySwitch
-    global init
+    global array1Full
+    global array2Full
 
 # Switches between the two buffers. When one fills up to the batch size, the other then start to fill up
 # Probably could have used a switch statement, but this works
@@ -93,34 +94,34 @@ ax.legend()
 
 #Feed batches of features to the NN and update plot
 while not rospy.is_shutdown():
-    if (array1Full or array2Full):
-	if array1Full:
+    if (array1Full==1 or array2Full==1):
+        if array1Full==1:
             #get input data from buffer
-	    inp_data = effort[0]
-	if array2Full:
+            inp_data = effort[0][:,0:24]
+            #append tension sensor data for plotting 
+            target=np.append(target,effort[0][:,24])
+            array1Full = 0
+        if array2Full==1:
             #get input data from buffer
-	    inp_data = effort[0]
-	#append tension sensor data for plotting 
-	target=np.append(target,)
-	#Run the NN prediction
-	pred_v = sess.run(y_,feed_dict={Xin: inp_data})
-	#Append predicted value to the validation_prediction variable (used for the plot)
-	validation_prediction=np.append(validation_prediction,pred_v)
-	#Define X and Y axis variable for the two lines in the plot
-	pred_line.set_ydata(validation_prediction)
-	pred_line.set_xdata(range(len(validation_prediction)))
-	real_line.set_ydata(target)
-	real_line.set_xdata(range(len(target)))
-	#Scale plot
-	ax.relim()
-	ax.autoscale_view()
-	#Update
-	plt.draw()
-	plt.pause(0.05)
-
-while True:
-    plt.pause(0.05)
-
-
+            inp_data = effort[1][:,0:24]
+            #append tension sensor data for plotting 
+            target=np.append(target,effort[1][:,24])
+            array2Full = 0
+        #Run the NN prediction
+        pred_v = sess.run(y_,feed_dict={Xin: inp_data})
+        #Append predicted value to the validation_prediction variable (used for the plot)
+        validation_prediction=np.append(validation_prediction,pred_v)
+        #Define X and Y axis variable for the two lines in the plot
+        pred_line.set_ydata(validation_prediction)
+        pred_line.set_xdata(range(len(validation_prediction)))
+        real_line.set_ydata(target)
+        real_line.set_xdata(range(len(target)))
+        #Scale plot
+        ax.relim()
+        ax.autoscale_view()
+        #Update
+        plt.draw()
+        plt.pause(0.05)
+        print('test')
 
 
