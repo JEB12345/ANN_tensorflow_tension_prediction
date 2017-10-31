@@ -12,33 +12,53 @@ from matplotlib import style
 import scipy.io
 from time import sleep
 
+# ROS Stuff
+import rospy
+from sensor_msgs.msg import JointState
+
 #Define variables
 D=24                                    #Number of features (in this case, number of motors)
 batch_size = 100                        #Size of the batch to be fed in the NN
 VALID_SET_SIZE=20000                    #Size of the dataset
 
-#Importing dataset
-dataset_valid=scipy.io.loadmat('2017-10-23_18-07-28_big_dataset_v1.mat')
-dataset_effort_valid=dataset_valid.get('effort')
+# Intialze a ROS node
+rospy.init_node('ANN_tension_predicition_v3')
 
-#Importing target(output) values that will be plotted next to the prediction
-valid_target=[]
-for i in range(0, VALID_SET_SIZE):
-    valid_target.append(dataset_effort_valid[i,D])
-valid_target=np.asarray(valid_target)
-valid_target=np.reshape(valid_target,[len(valid_target),1])
+# Create two buffers to "ping-pong" between
+effort1 = np.ones([100,25])*np.nan
+effort2 = np.ones([100,25])*np.nan
+effort = [effort1, effort2]		# one array for both buffers addressable by arraySwitch defined below
+index = 0 				# used to count buffer batch size
+arraySwitch = 0 			# flag to change buffers
+arrayFull = 0				# flag to signal that buffer is full
 
-#Importing features(input) values that will be fed to the NN
-valid_features=[]
-for i in range(0, VALID_SET_SIZE):
-    valid_features.append(dataset_effort_valid[i,0:D])
-valid_features=np.asarray(valid_features)
-valid_features=np.reshape(valid_features,[len(valid_features),D])
+# ROS message callback for Hebi JointState message
+def callback(msg):
+    global effort			# global for scoping the variables outside of the callback function
+    global index
+    global arraySwitch
+    global init
 
+# Switches between the two buffers. When one fills up to the batch size, the other then start to fill up
+# Probably could have used a switch statement, but this works
+    if arraySwitch == 0:
+        effort[arraySwitch][index,:] = msg.effort
+        index += 1
+        if index >= 100:
+            arraySwitch = 1
+            index = 0
+    elif arraySwitch == 1:
+        effort[arraySwitch][index,:] = msg.effort
+        index += 1
+        if index >= 100:
+            arraySwitch = 0
+            index = 0
+    else:
+        arraySwitch = 0
+        index = 0
 
-
-validation_prediction=[]
-valid_batch=int(len(valid_features)/batch_size)
+# Subscribes the the ROS message which houses the Hebi information
+rospy.Subscriber("/hebiros/my_group/feedback/joint_state", JointState, callback)
 
 #LOAD trained neural network
 sess=tf.Session()
@@ -52,9 +72,10 @@ graph=tf.get_default_graph()
 Xin=graph.get_tensor_by_name("Xin:0")
 y_=graph.get_tensor_by_name("y_:0")
 
-#Compute and plot data
 
+### Compute and plot data ###
 target=[]
+validation_prediction=[]
 
 #Make plot interactive
 plt.ion()
@@ -68,11 +89,11 @@ real_line, = ax.plot([], [],'-r',label='real')
 ax.legend()
 
 #Feed batches of features to the NN and update plot
-for j in range (valid_batch):
-    #select input data from dataset
-    inp_data = valid_features[j*batch_size:(j+1)*batch_size,:]
-    #append real output data to target variable (used to plot real data)
-    target=np.append(target,valid_target[j*batch_size:(j+1)*batch_size,:])
+while not rospy.is_shutdown():
+    #get input data from buffer
+    inp_data =
+    #append tension sensor data for plotting 
+    target=np.append(target,)
     #Run the NN prediction
     pred_v = sess.run(y_,feed_dict={Xin: inp_data})
     #Append predicted value to the validation_prediction variable (used for the plot)
