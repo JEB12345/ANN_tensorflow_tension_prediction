@@ -19,7 +19,7 @@ from sensor_msgs.msg import JointState
 #Define variables
 D=24                                    #Number of features (in this case, number of motors)
 batch_size = 100                        #Size of the batch to be fed in the NN
-VALID_SET_SIZE=20000                    #Size of the dataset
+SET_SIZE=60*batch_size                  #Size of the dataset
 
 # Intialze a ROS node
 rospy.init_node('ANN_tension_predicition_v3')
@@ -111,6 +111,11 @@ while not rospy.is_shutdown():
         pred_v = sess.run(y_,feed_dict={Xin: inp_data})
         #Append predicted value to the validation_prediction variable (used for the plot)
         validation_prediction=np.append(validation_prediction,pred_v)
+        
+        if (np.size(target) > SET_SIZE):
+            np.delete(target,0)
+        if (np.size(validation_prediction) > SET_SIZE):
+            np.delete(validation_prediction,0)
         #Define X and Y axis variable for the two lines in the plot
         pred_line.set_ydata(validation_prediction)
         pred_line.set_xdata(range(len(validation_prediction)))
@@ -121,7 +126,7 @@ while not rospy.is_shutdown():
         ax.autoscale_view()
         #Update
         plt.draw()
-        plt.pause(0.05)
+        plt.pause(0.01)
         print('test')
 
 
