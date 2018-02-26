@@ -1,2 +1,2 @@
-model_checkpoint_path: "NN_tension_pred_saver-9"
-all_model_checkpoint_paths: "NN_tension_pred_saver-9"
+model_checkpoint_path: "NN_tension_pred_saver-0"
+all_model_checkpoint_paths: "NN_tension_pred_saver-0"
